@@ -22,9 +22,13 @@ public class Main {
         List<Seller> list = sellerDao.findByDepartment(department);
         list.forEach(System.out::println);
 
-        System.out.println("\n=== Teste 2: seller findAll ===");
+        System.out.println("\n=== Teste 3: seller findAll ===");
         list = sellerDao.findAll();
         list.forEach(System.out::println);
 
+        System.out.println("\n=== Teste 4: seller findAll ===");
+        Seller newSeller = new Seller(null, "Greg", "greg@gmail.com", LocalDate.now(), 4000.0, department);
+        sellerDao.insert(newSeller);
+        System.out.println("Inserido! Novo id: " + newSeller.getId());
     }
 }
