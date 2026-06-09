@@ -5,8 +5,8 @@ import db.DbException;
 import model.Department;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 
 public class DepartmentDaoJDBC implements model.dao.DepartmentDao {
 
@@ -18,17 +18,72 @@ public class DepartmentDaoJDBC implements model.dao.DepartmentDao {
 
     @Override
     public void insert(Department department) {
+        PreparedStatement statement = null;
 
+        try {
+            statement = connection.prepareStatement(
+                    "INSERT INTO department " +
+                            "(name) " +
+                            "VALUES (?)",
+                    Statement.RETURN_GENERATED_KEYS
+            );
+
+            statement.setString(1, department.getName());
+
+            int rowsAffected = statement.executeUpdate();
+            if (rowsAffected > 0) {
+                ResultSet resultSet = statement.getGeneratedKeys();
+                if (resultSet.next()) {
+                    int id = resultSet.getInt(1);
+                    department.setId(id);
+                    DB.closeResultSet(resultSet);
+                } else {
+                    throw new DbException("Nenhuma linha alterada!");
+                }
+            }
+        } catch (SQLException e) {
+            throw new DbException(e.getMessage());
+        } finally {
+            DB.closeStatement(statement);
+        }
     }
 
     @Override
     public void update(Department department) {
+        PreparedStatement statement = null;
 
+        try {
+            statement = connection.prepareStatement(
+                    "UPDATE department " +
+                            "SET Name = ? " +
+                            "WHERE id = ?"
+            );
+
+            statement.setString(1, department.getName());
+            statement.setInt(2, department.getId());
+            statement.executeUpdate();
+        }  catch (SQLException e) {
+            throw new DbException(e.getMessage());
+        } finally {
+            DB.closeStatement(statement);
+        }
     }
 
     @Override
     public void deleteById(Integer id) {
+        PreparedStatement statement = null;
+        try {
+            statement = connection.prepareStatement(
+                    "DELETE FROM department WHERE id = ?"
+            );
 
+            statement.setInt(1, id);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new DbException(e.getMessage());
+        } finally {
+            DB.closeStatement(statement);
+        }
     }
 
     @Override
@@ -62,6 +117,24 @@ public class DepartmentDaoJDBC implements model.dao.DepartmentDao {
     public List<Department> findAll() {
         PreparedStatement statement = null;
         ResultSet resultSet = null;
+
+        try {
+            statement = connection.prepareStatement(
+                    "SELECT * FROM department ORDER BY name"
+            );
+            resultSet = statement.executeQuery();
+
+            List<Department> list = new ArrayList<>();
+            while (resultSet.next()) {
+                list.add(instantiateDepartment(resultSet));
+            }
+            return list;
+        } catch (SQLException e) {
+            throw new DbException(e.getMessage());
+        } finally {
+            DB.closeStatement(statement);
+            DB.closeResultSet(resultSet);
+        }
     }
 
     private Department instantiateDepartment(ResultSet resultSet) throws SQLException {
